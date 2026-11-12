@@ -8,8 +8,10 @@ A fully automated, virtualized enterprise network environment built using Infras
 
 ## 🎯 Objectives & Phased Architecture
 
-1. **Bastion & Console Server:** Establish a secure gateway server with dual network interfaces (`ens3` for OOB, `ens4` for transit) to strictly separate transit traffic from internal management.
-2. **Out-of-Band (OOB) Management Plane:** Isolate switch management traffic onto VLAN 100 so that only the console server can directly access and configure network devices via automated control planes.
+1. **Bastion Host / WAN Access**: Set up the edge router (R1) to handle WAN connectivity and port forward external SSH traffic (TCP 2222) to the console server's WAN-facing interface (ens4).
+
+2. **OOB Mangagment Plane**: Configure the secondary interface (ens3) on the Ubuntu Console Server to act as the gateway/management headend into the isolated Management Switch, allowing direct access to console ports, device management planes, and downstream infrastructure out-of-band.
+
 3. **Network Services VLAN & Windows Server:** Integrate Windows Server workloads into a dedicated services segment to host core infrastructure roles:
    - **DHCP / DNS:** Automated client address assignment and name resolution.
    - **NTP:** Centralized time synchronization across all network gear and servers.
@@ -19,15 +21,15 @@ A fully automated, virtualized enterprise network environment built using Infras
 
 ---
 
-## Objective 1:  Bastion & Console Server
+## Objective 1: Bastion Host / WAN Access
 
-configure the gateway router with DHCP WAN interface, NAT overload (PAT) and inbound static port forwarding for extenral ssh access
+Configure the gateway router with DHCP WAN interface, NAT overload (PAT) and inbound static port forwarding for extenral ssh access
 
 ```bash
-[CLOUD]-----[ R1 ]----[ CD1 ]----[ ACC1 ]
-            |    |    |          |
-            |  [ MANGEMENT SWITCH ]
-            |        |
+[CLOUD]-----[ R1 ]
+            |    
+            |  
+            |  
         [ Console Server ]
 ```
 
@@ -69,10 +71,10 @@ ip route 192.168.200.0 255.255.255.252 192.168.200.1
 
 ```bash
 sudo -i 
-vi /etc/netplan/00-config.yml
+vi /etc/netplan/00-installer-config-.yml
 ```
 
-```yaml netplan/00-config.yml
+```yaml
 network:
     ethernets:
         ens4:
@@ -98,4 +100,148 @@ git clone htts://github.com/raulcs16/lab_network_infra.git repo
 cd repo/boostrap
 chmod +x ansible.sh
 ./ansible.sh
+```
+
+**Objective Complete**:
+
+![image objective 1 completed](/images/objective_1.png)
+
+## Objective 2: OOB Mangagment Plane
+
+```bash
+[CLOUD]-----[ R1 ]  [ CD1 ]   [ ACC1 ]
+            |    |    |          |
+            |  [ MANGEMENT SWITCH (MGS) ]
+            |        |
+        [ Console Server (CS) ]
+```
+
+**Interface Plan**:
+
+| DEVICE | Interface    |    IPv4           |    Description
+|--------|--------------|-------------------|------------
+|   CS   | ens3         | 192.168.100.99/24 |  static ip
+|   MGS  | eth 0/0      |     N/A           |  access port, vlan 100
+|   MGS  | eth 1/0      |     N/A           |  trunk, allowed vlan 100
+|   MGS  | eth 2/0      |     N/A           |  trunk, allowed vlan 100
+|   MGS  | eth 0/1      | 10.1.100.1/31     |  p2p link, no switch port
+|   R1   | eth 0/0      | 10.1.100.0/31     |  p2p link
+|   R1   | loopback 100 | 192.168.100.254/32|  virtual interface
+|   CD1  | eth 0/0      |      N/A          |  trunk, allowed vlan 100
+|   CD1  | vlan 100     | 192.168.100.11/24 |  SVI
+|   ACC1 | eth 0/0      |       N/A         |  trunk allowed vlan 100
+|   ACC1 | vlan 100     | 192.168.100.21/24 |  SVI
+
+**Console Server Configuration**:
+
+```bash
+sudo -i 
+vi /etc/netplan/00-installer.yaml
+```
+
+```yaml
+network:
+    ethernets:
+        ens3:
+            dhcp4: no
+            addresses:
+                - 192.168.100.99/24
+        ens4:
+            dhcp4: no 
+            addresses:
+                - 192.168.200.2/30
+            routes:  
+                - to: default
+                  via: 192.168.200.1
+            nameservers:
+                addresses:
+                    - 8.8.8.8
+version: 2
+```
+
+```bash
+netplan try
+netplan apply
+```
+
+**Mangagment Switch Configuration**:
+
+```bash
+config t
+vlan 100
+name OOB
+
+int eth 0/0
+switchport mode access
+switchport access vlan 100
+spanning-tree portfast
+spanning tree bpdugaurd enable
+no shutdown
+
+int eth 0/1
+no switchport
+ip address 10.1.100.1 255.255.255.254
+no shutdown
+exit
+ip routing
+ip route 192.168.100.254 255.255.255.255 10.1.100.0
+
+int eth 1/0
+switchport trunk encapsulation dot1q
+switchport mode trunk
+switchport trunk allowed vlan 100
+no shutdown
+
+int eth 2/0
+switchport trunk encapsulation dot1q
+switchport mode trunk
+switchport trunk allowed vlan 100
+no shutdown
+```
+
+**Router Configuration**:
+
+```bash router
+config t
+int loopback 100
+ip address 192.168.100.254 255.255.255.2555
+no shutdown
+
+int eth 0/0
+ip address 10.1.100.0 255.255.255.254
+no shutdown
+ip route 192.168.100.0 255.255.255.0 10.1.100.1
+```
+
+**CD1 Configuration**:
+
+```bash
+config t
+vlan 100
+name OOB
+int vlan 100
+ip address 192.168.100.1 255.255.255.0 
+no shutdown
+int eth 0/0
+switchport trunk encapsulation dot1q
+switchport mode trunk
+switchport trunk allowed vlan 100
+no shutdown
+```
+
+**ACC1 Configuration**:
+
+```bash
+config t
+vlan 100
+name OOB
+int vlan 100
+ip address 192.168.100.11 255.255.255.0 
+
+no shutdown
+int eth 0/0
+switchport trunk encapsulation dot1q
+switchport mode trunk
+switchport trunk allowed vlan 100
+no shutdown
 ```
