@@ -1,0 +1,3 @@
+[submodule "network_infra"]
+	path = network_infra
+	url = git@github.com:raulcs16/lab_network_infra.git
