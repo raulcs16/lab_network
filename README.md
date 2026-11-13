@@ -106,7 +106,9 @@ chmod +x ansible.sh
 
 ![image objective 1 completed](/images/objective_1.png)
 
-## Objective 2: OOB Mangagment Plane
+## Objective 2.1: OOB Mangagment Plane
+
+Set up paths from Console server to each network device
 
 ```bash
 [CLOUD]-----[ R1 ]  [ CD1 ]   [ ACC1 ]
@@ -121,6 +123,7 @@ chmod +x ansible.sh
 | DEVICE | Interface    |    IPv4           |    Description
 |--------|--------------|-------------------|------------
 |   CS   | ens3         | 192.168.100.99/24 |  static ip
+|   MGS  | vlan 100     | 192.168.100.1/24  |  SVI
 |   MGS  | eth 0/0      |     N/A           |  access port, vlan 100
 |   MGS  | eth 1/0      |     N/A           |  trunk, allowed vlan 100
 |   MGS  | eth 2/0      |     N/A           |  trunk, allowed vlan 100
@@ -170,6 +173,10 @@ netplan apply
 config t
 vlan 100
 name OOB
+
+int vlan 100
+ip address 192.168.100.1 255.255.255.0
+no shutdown
 
 int eth 0/0
 switchport mode access
@@ -244,4 +251,29 @@ switchport trunk encapsulation dot1q
 switchport mode trunk
 switchport trunk allowed vlan 100
 no shutdown
+```
+
+**Objective 2.1 Complete**:
+
+![image objetive 2.1](/images/objective_2.1.png)
+
+## Objective 2.2: Set Up SSH Login on each Device
+
+**device config**:
+
+```bash
+config t
+ip domain-name netlab.local
+crypto generate rsa modulus 2048
+
+line vty 0 15 
+transport input ssh
+login local
+exit
+```
+
+```bash
+cd ./.ssh
+ssh-keygen -t rsa -b 2048
+: netlab
 ```
