@@ -265,15 +265,13 @@ no shutdown
 config t
 ip domain-name netlab.local
 crypto generate rsa modulus 2048
+username ansible privilege 15 secret mysupersecret
 
-line vty 0 15 
+line vty 0 4
 transport input ssh
 login local
-exit
+end
+write memory
 ```
 
-```bash
-cd ./.ssh
-ssh-keygen -t rsa -b 2048
-: netlab
-```
+![image objetive 2.1](/images/objective_2.2.png)
