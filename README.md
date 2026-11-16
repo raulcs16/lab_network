@@ -275,3 +275,27 @@ write memory
 ```
 
 ![image objetive 2.1](/images/objective_2.2.png)
+
+## Objective 3: Network Configuration
+
+Configure the Service Network
+
+```bash
+[CLOUD]-----[ R1 ]--[ CD1 ]---[ ACC1 ]------[ Windows Server (DC1) ]
+            |    |    |          |
+            |  [ MANGEMENT SWITCH (MGS) ]
+            |        |
+        [ Console Server (CS) ]
+```
+
+**Interface Plan**:
+
+| DEVICE | Interface    |    IPv4           |    Description  
+|--------|--------------|-------------------|-----------------
+| R1     |  eth 0/1     | 10.1.1.0/31       | p2p CD1
+| CD1    |  eth 0/1     | 10.1.1.1/31       | p2p R1
+| CD1    |  vlan 10     | 10.1.10.1/24      | Network Services VLAN
+| CD1    |  eth 1/1     |   N/A             | trunk port allowed vlan 10
+| ACC1   |  eth 0/1     |   N/A             | trunk port allowed vlan 10
+| ACC1   |  eth 1/1-3   |   N/A             | Access port allowed vlan 10
+| DC1    |  ens3        |  10.1.10.100/24   | Static IP
