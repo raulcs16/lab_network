@@ -1,25 +1,31 @@
 # Network Infrastructure & Out-of-Band Management Lab
 
+![starting topology](/images/topology.png)
+
 ## Abstract
 
-A fully automated, virtualized enterprise network environment built using Infrastructure-as-Code (IaC) principles. The architecture features a dual-NIC Ubuntu bastion and console server ensuring secure management access, an isolated out-of-band (OOB) management plane, and integrated core network services hosted via Windows Server workloads.
-
----
+A production-grade, virtualized enterprise network environment architected to demonstrate core competencies in systems administration, network engineering, and secure infrastructure management. Built using Infrastructure-as-Code (IaC) and automated provisioning workflows, the architecture features a hardened, dual-NIC Ubuntu bastion and console server ensuring secure management access, an isolated out-of-band (OOB) management plane for administrative control, and integrated core network services anchored by a Windows Server Active Directory Domain Controller.
+This lab mirrors real-world corporate IT environments, highlighting hands-on proficiency in identity services, virtualization, routing, and disciplined technical documentation
 
 ## 🎯 Objectives & Phased Architecture
 
-1. **Bastion Host / WAN Access**: Set up the edge router (R1) to handle WAN connectivity and port forward external SSH traffic (TCP 2222) to the console server's WAN-facing interface (ens4).
+1. **Bastion Host & Secure Edge Access (WAN)**: Configure the edge gateway (R1) for WAN connectivity, NAT overload (PAT), and inbound static port forwarding (TCP 2222) to establish a secure, controlled administrative entry point through a dual-NIC Ubuntu console server.
+2. **OOB Mangagment Plane**: Establish a dedicated, segregated management network across switches and routers. This ensures administrative traffic, console access, and device management planes remain completely isolated from user data traffic for enhanced security and reliability.nagement planes, and downstream infrastructure out-of-band.
+3. **Configure Network Service Vlan + Windows Domain Controller**: Deploy Service VLAN, dynamic routing, and a Windows Server workload configured as an Active Directory Domain Controller (AD DS) and DNS server to manage identity, name resolution, and core infrastructure services.:
 
-2. **OOB Mangagment Plane**: Configure the secondary interface (ens3) on the Ubuntu Console Server to act as the gateway/management headend into the isolated Management Switch, allowing direct access to console ports, device management planes, and downstream infrastructure out-of-band.
+4. **User Subnets & Redundant Core Services (DHCP)**: Deploy a secondary member server on a dedicated user VLAN (VLAN 20) to handle dynamic IP allocation, establishing a split-scope or secondary DHCP server to ensure high availability and network segmentation.
 
-3. **Network Services VLAN & Windows Server:** Integrate Windows Server workloads into a dedicated services segment to host core infrastructure roles:
-   - **DHCP / DNS:** Automated client address assignment and name resolution.
-   - **NTP:** Centralized time synchronization across all network gear and servers.
-   - **AAA:** Centralized device authentication and access control.
-4. **User VLAN Segmentation:** Implement multi-tier user and device VLANs with inter-VLAN routing controls.
-5. **Network Infrastructure Redundancy:** Introduce high-availability topologies, redundant core switching, STP hardening, and gateway failover protocols.
+5. **Active Directory Architecture, OUs & Group Policy (GPO)**: Design a corporate Organizational Unit (OU) structure, populate test user and computer accounts, and implement Group Policy Objects (GPOs) for security baselines, password policies, and automated workstation configuration.
 
----
+## Objective Progress
+
+| Objective | Progress
+|-----------|----------
+|    1      | Complete
+|    2      | Complete
+|    3      | Complete
+|    4      | Not Started
+|    5      | InProgress
 
 ## Objective 1: Bastion Host / WAN Access
 
