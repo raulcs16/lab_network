@@ -274,14 +274,13 @@ end
 write memory
 ```
 
-![image objetive 2.1](/images/objective_2.2.png)
+**Objective 2.2 Complete**:
+![image objetive 2.2](/images/objective_2.2.png)
 
-## Objective 3: Network Configuration
-
-Configure the Service Network
+## Objective 3: Network & Windows Server DC Configuration
 
 ```bash
-[CLOUD]-----[ R1 ]--[ CD1 ]---[ ACC1 ]------[ Windows Server (DC1) ]
+[CLOUD]-----[ R1 ]--[ CD1 ]---[ ACC1 ]-----------[ DC1 ]
             |    |    |          |
             |  [ MANGEMENT SWITCH (MGS) ]
             |        |
@@ -299,3 +298,27 @@ Configure the Service Network
 | ACC1   |  eth 0/1     |   N/A             | trunk port allowed vlan 10
 | ACC1   |  eth 1/1-3   |   N/A             | Access port allowed vlan 10
 | DC1    |  ens3        |  10.1.10.100/24   | Static IP
+
+**Playbook**:
+
+```yml
+- hosts: all
+  gather_facts: false
+  roles:
+    - role: vlans
+    - role: interfaces
+    - role: routing
+    - role: nat
+```
+
+> *Note:* don't forget to configure a default route on CD1 to R1
+
+**Windows Server Desktop Provision**:
+
+> set static ipv4
+> set name: WIN-DC1-25
+> add ADDS Role & DNS Server Role
+> Promote to Domain Controller
+
+**Objective 3 Complete**:
+![image objetive 3](/images/objective_3.png)
